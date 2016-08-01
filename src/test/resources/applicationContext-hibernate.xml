@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:aop="http://www.springframework.org/schema/aop" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context" xmlns:webflow="http://www.springframework.org/schema/webflow-config" xmlns:tx="http://www.springframework.org/schema/tx" xsi:schemaLocation="         http://www.springframework.org/schema/beans         http://www.springframework.org/schema/beans/spring-beans-2.5.xsd" default-lazy-init="false" default-dependency-check="none" default-autowire="no">
+  <bean id="AppDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close" lazy-init="default" autowire="default" dependency-check="default">
+    <property name="driverClass" value="oracle.jdbc.driver.OracleDriver"/>
+   
+    <property name="jdbcUrl" value="jdbc:oracle:thin:@172.16.49.61:1521:xddb"/>
+    <property name="user" value="XLSUNIT"/>
+    <property name="password" value="XLSUNIT"/> 
+
+    <property name="minPoolSize" value="1"/>
+    <property name="maxPoolSize" value="1"/>
+  </bean>
+ 
+  <bean id="mySessionFactory" name="ECSessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean" abstract="false" lazy-init="default" autowire="default" dependency-check="default">
+    <property name="mappingResources">
+      <list>
+        <value>SysOrder.hbm.xml</value>
+      </list>
+    </property>
+    <property name="hibernateProperties">
+      <props>
+        <prop key="hibernate.dialect">org.hibernate.dialect.Oracle9Dialect</prop>
+        <prop key="hibernate.show_sql">true</prop>
+     
+      </props>
+    </property>
+
+    <property name="dataSource">
+      <ref bean="AppDataSource"/>
+    </property>
+  </bean>
+  <bean id="transactionManager" name="ECTransactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager" abstract="false" lazy-init="default" autowire="default" dependency-check="default">
+    <property name="sessionFactory">
+      <ref bean="mySessionFactory"/>
+    </property>
+  </bean>
+  
+  <bean id="baseTransactionProxy" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean" abstract="true" lazy-init="default" autowire="default" dependency-check="default">
+    <property name="transactionManager" ref="transactionManager"/>
+    <property name="transactionAttributeSource">
+      <ref bean="namingTransactionAttribute"/>
+    </property>
+  </bean>
+  <bean id="namingTransactionAttribute" class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource" abstract="false" lazy-init="default" autowire="default" dependency-check="default">
+    <property name="properties">
+      <props>
+        <prop key="save*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-RollbackableBizException</prop>
+        <prop key="delete*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-RollbackableBizException</prop>
+        <prop key="update*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-RollbackableBizException</prop>
+        <prop key="init*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-RollbackableBizException</prop>
+        <prop key="on*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-RollbackableBizException</prop>
+        <prop key="wf*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-RollbackableBizException</prop>
+        <prop key="perform*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-RollbackableBizException</prop>
+      </props>
+    </property>
+  </bean>
+  <bean id="allNamingTransactionAttribute" class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource" abstract="false" lazy-init="default" autowire="default" dependency-check="default">
+    <property name="properties">
+      <props>
+        <prop key="*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-RollbackableBizException</prop>
+      </props>
+    </property>
+  </bean>
+  <bean id="txTransactionProxy" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean" abstract="true">
+    <property name="transactionManager" ref="transactionManager"/>
+    <property name="transactionAttributeSource">
+      <ref bean="namingTransactionAttribute"/>
+    </property>
+  </bean>
+  <bean id="txAllTransactionProxy" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean" abstract="true">
+    <property name="transactionManager" ref="transactionManager"/>
+    <property name="transactionAttributeSource">
+      <ref bean="allNamingTransactionAttribute"/>
+    </property>
+  </bean>
+ 
+</beans>

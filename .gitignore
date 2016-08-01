@@ -1,0 +1,10 @@
+.classpath
+.project
+.settings/
+
+**/build/
+**/target/
+
+**/WEB-INF/classes
+**/WEB-INF/lib
+

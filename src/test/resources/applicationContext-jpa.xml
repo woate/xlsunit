@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:c="http://www.springframework.org/schema/c" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:jee="http://www.springframework.org/schema/jee" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:util="http://www.springframework.org/schema/util" xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
+
+	<context:annotation-config />
+	<context:component-scan base-package="com.coamctech.xlsunit">
+	</context:component-scan>
+
+
+	<context:property-placeholder location="classpath:application.properties" />
+	<!-- DataSource -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close"
+		p:driverClassName="${jdbc.driverClassName}"
+		p:url="${jdbc.url}"
+		p:username="${jdbc.username}"
+		p:password="${jdbc.password}"
+		p:initialSize="${jdbc.pool.initialSize}"
+		p:minIdle="${jdbc.pool.minIdle}"
+		p:maxActive="${jdbc.pool.maxActive}"
+		p:maxWait="${jdbc.pool.maxWait}"
+		p:timeBetweenEvictionRunsMillis="${jdbc.pool.timeBetweenEvictionRunsMillis}"
+		p:minEvictableIdleTimeMillis="${jdbc.pool.minEvictableIdleTimeMillis}"
+		p:validationQuery="SELECT 1 FROM DUAL"
+		p:testWhileIdle="true"
+		p:testOnBorrow="false"
+		p:testOnReturn="false"
+		p:poolPreparedStatements="${jdbc.pool.poolPreparedStatements}"
+		p:filters="stat" />
+
+	<!-- Jpa Entity Manager 配置 -->
+	<bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean" 
+		p:dataSource-ref="dataSource"
+		p:jpaVendorAdapter-ref="hibernateJpaVendorAdapter"
+		p:packagesToScan="com.coamctech.xlsunit"
+		p:jpaProperties-ref="jpaProperties" />
+	
+	<util:map id="jpaProperties">
+		<entry key="hibernate.ejb.naming_strategy" value="org.hibernate.cfg.ImprovedNamingStrategy" /> <!-- 命名规则 myName -> my_name -->
+		
+	</util:map>
+
+	<bean id="hibernateJpaVendorAdapter" class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter"
+		p:databasePlatform-ref="databasePlatform" />
+	
+	<!-- 根据数据源获取具体的数据库方言 -->
+	<bean id="databasePlatform" factory-method="getDialect" class="org.springside.modules.persistence.Hibernates"
+		c:dataSource-ref="dataSource" />
+
+	<!-- Spring Data Jpa配置 -->
+	<jpa:repositories base-package="com.coamctech.sample.demo.repository"
+		transaction-manager-ref="transactionManager" entity-manager-factory-ref="entityManagerFactory" />
+
+	<!-- Jpa 事务配置 -->
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager" 
+		p:entityManagerFactory-ref="entityManagerFactory" />
+
+	<!-- 使用annotation定义事务 -->
+	<tx:annotation-driven  transaction-manager="transactionManager" proxy-target-class="true" />
+
+</beans>
